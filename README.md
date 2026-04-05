@@ -2,7 +2,7 @@
 
 ## What This Folder Is
 
-This folder is a slimmed-down, sendable version of the legal judgment prediction robustness repository.
+This folder is a slimmed-down, version of the legal judgment prediction robustness repository.
 
 It keeps:
 
