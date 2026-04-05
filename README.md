@@ -1,4 +1,4 @@
-# Shareable Minimal Repository Package
+# LegalNLP Project
 
 ## What This Folder Is
 
@@ -22,20 +22,10 @@ It does **not** keep:
 - local dependency caches
 - temporary folders
 
-This is the folder you can zip and send to someone else if you want them to be able to **run the project from scratch** without shipping the heavy outputs.
-
-## What To Open First
-
-If the recipient wants the full research explanation and final findings, they should read:
-
-- `FULL_PROJECT_README.md`
-
-If they want the practical “how do I run this?” entrypoint, they should read this file first.
-
 ## Included Structure
 
 ```text
-shareable_repo_minimal/
+LegalNLP/
   README.md
   FULL_PROJECT_README.md
   pyproject.toml
@@ -50,9 +40,7 @@ shareable_repo_minimal/
     reports/
 ```
 
-## What The Recipient Needs Separately
-
-They still need:
+## What you will need Separately
 
 1. a Python environment
 2. the IL-TUR dataset on their own machine
@@ -68,7 +56,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Then optionally verify the code:
+optionally verify the code:
 
 ```powershell
 pytest tests -q
