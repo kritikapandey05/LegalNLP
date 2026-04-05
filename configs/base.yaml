@@ -1,0 +1,249 @@
+project_name: legal_robustness
+
+data:
+  dataset_root: ${LEGAL_ROBUSTNESS_DATASET_ROOT}
+  task_allowlist:
+    - cjpe
+    - rr
+  inspection_sample_rows: 2
+  inspection_max_text_chars: 400
+  inspection_max_list_items: 10
+  inspection_max_tree_depth: 5
+  loader_batch_size: 256
+  max_malformed_row_fraction: 0.5
+  export_normalized_samples: true
+  normalized_sample_size: 5
+  fail_on_duplicate_ids: false
+  collapse_text_whitespace: false
+  rr_label_normalization: preserve
+
+output:
+  root_dir: outputs
+  reports_dir: outputs/reports
+  dataset_inspection_dir: outputs/reports/dataset_inspection
+  caches_dir: outputs/caches
+  models_dir: outputs/models
+  perturbations_dir: outputs/perturbations
+  evaluations_dir: outputs/evaluations
+  analysis_dir: outputs/analysis
+
+logging:
+  level: ${LEGAL_ROBUSTNESS_LOG_LEVEL}
+  log_to_file: true
+
+runtime:
+  seed: 42
+  deterministic: true
+  run_name: ${LEGAL_ROBUSTNESS_RUN_NAME}
+
+sections:
+  rr_label_names: {}
+  rr_section_mapping:
+    facts:
+      - Fact
+      - Issue
+    precedents:
+      - PrecedentReliedUpon
+      - PrecedentNotReliedUpon
+      - PrecedentOverruled
+    reasoning:
+      - ArgumentPetitioner
+      - ArgumentRespondent
+      - Statute
+      - Dissent
+      - RatioOfTheDecision
+    conclusion:
+      - RulingByPresentCourt
+    other:
+      - RulingByLowerCourt
+      - None
+  unmapped_label_behavior: warn_and_route_to_other
+  allow_partial_mapping: true
+  fail_on_unmapped_labels: false
+  export_reconstruction_samples: true
+  reconstruction_sample_size: 5
+
+section_transfer:
+  label_mode: broad
+  sentence_segmentation_method: heuristic_legal
+  sentence_segmentation_abbreviations:
+    - mr
+    - mrs
+    - ms
+    - dr
+    - prof
+    - shri
+    - smt
+    - j
+    - jj
+    - cji
+    - no
+    - nos
+    - sec
+    - secs
+    - art
+    - arts
+    - uoi
+    - ltd
+    - co
+    - corp
+    - inc
+    - ors
+    - anr
+    - etc
+    - vs
+    - v
+  segmentation_short_sentence_chars: 15
+  segmentation_long_sentence_chars: 400
+  sample_size: 10
+  context_window_size: 1
+  use_position_features: true
+  use_context_features: true
+  use_token_bigrams: true
+  feature_min_count: 2
+  max_vocabulary_size: 50000
+  classifier_type: multinomial_naive_bayes
+  export_prediction_probabilities: true
+  dominant_section_ratio_threshold: 0.8
+  sample_sentence_preview_count: 5
+
+prediction:
+  baseline_models:
+    - tfidf_logistic_regression
+    - multinomial_naive_bayes
+    - averaged_passive_aggressive
+    - section_contextual_logistic_regression
+  input_variants:
+    - full_text
+    - pseudo_all_sections
+  evaluation_splits:
+    - dev
+    - test
+  include_section_markers: true
+  max_tokens_per_document: 512
+  min_token_chars: 2
+  use_token_bigrams: false
+  hashing_dimension: 16384
+  logistic_learning_rate: 0.05
+  logistic_epochs: 3
+  logistic_l2_weight: 0.000001
+  passive_aggressive_epochs: 5
+  passive_aggressive_aggressiveness: 1.0
+  contextual_input_variants:
+    - pseudo_all_sections
+  contextual_hashing_dimension: 32768
+  contextual_learning_rate: 0.08
+  contextual_epochs: 4
+  contextual_l2_weight: 0.0000005
+  contextual_section_sentence_limit: 2
+  contextual_sentence_token_limit: 48
+  sample_size: 5
+  prediction_preview_chars: 240
+  model_artifact_prefix: baseline
+
+perturbation:
+  enabled_recipes:
+    - drop_conclusion
+    - drop_precedents
+    - keep_facts_reasoning
+    - keep_reasoning_only
+    - mask_conclusion
+    - reorder_conclusion_first
+  evaluation_splits:
+    - test
+  include_section_markers: true
+  mask_placeholder_template: "[MASKED_{SECTION}_SECTION]"
+  sample_size: 5
+  preview_chars: 240
+  run_perturbed_evaluation: false
+
+robustness:
+  selected_model_variants:
+    - tfidf_logistic_regression::pseudo_all_sections
+    - multinomial_naive_bayes::pseudo_all_sections
+    - averaged_passive_aggressive::pseudo_all_sections
+    - section_contextual_logistic_regression::pseudo_all_sections
+  selected_perturbation_recipes:
+    - drop_precedents
+    - keep_reasoning_only
+  evaluation_splits:
+    - test
+  export_per_example_predictions: true
+  export_comparative_predictions: true
+  export_prediction_probabilities: true
+  compute_flip_rate: true
+  compute_relative_retention: true
+  high_coverage_min_fraction: 0.7
+  medium_coverage_min_fraction: 0.3
+  isolate_low_coverage_recipes: true
+  include_full_text_in_unperturbed_comparison: true
+  apa_centered_reporting: true
+  primary_model_variant: averaged_passive_aggressive::pseudo_all_sections
+  reference_context_variants:
+    - full_text
+    - pseudo_all_sections
+    - pseudo_facts_reasoning
+  sample_size: 8
+  failure_analysis_recipes:
+    - drop_precedents
+    - keep_reasoning_only
+  failure_analysis_case_limit: 20
+  failure_analysis_preview_chars: 240
+  enable_failure_analysis_disagreement_analysis: true
+  qualitative_example_count_per_recipe: 6
+  qualitative_examples_per_category: 1
+  qualitative_preview_chars: 220
+  qualitative_include_model_variants: []
+  case_bundle_size: 12
+  results_package_dirname: results_package
+  primary_qualitative_example_count: 4
+  secondary_qualitative_example_count: 4
+  narrative_preview_chars: 180
+  export_chart_ready_data: true
+  export_appendix_bundles: true
+  canonical_section_transfer_run_dir:
+  canonical_baseline_run_dir:
+  canonical_robustness_run_dir:
+  paper_freeze_output_dirname: paper_drafting_package
+  export_writing_support_bundles: true
+  run_targeted_strengthening_check: true
+  export_paper_selection_guidance: true
+  stability_comparison_model_variants:
+    - multinomial_naive_bayes::pseudo_all_sections
+    - tfidf_logistic_regression::pseudo_all_sections
+  canonical_paper_drafting_package_dir:
+  section_importance_output_dirname: section_importance
+  canonical_section_importance_run_dir:
+  section_importance_primary_model_variant: averaged_passive_aggressive::pseudo_all_sections
+  section_importance_supporting_model_variants:
+    - multinomial_naive_bayes::pseudo_all_sections
+    - tfidf_logistic_regression::pseudo_all_sections
+  section_importance_sections:
+    - facts
+    - precedents
+    - reasoning
+    - conclusion
+    - other
+  section_importance_pairwise_keep_variants:
+    - keep_facts_reasoning
+    - keep_reasoning_precedents
+    - keep_facts_precedents
+  run_section_importance_cross_model_check: true
+  section_importance_cross_model_recipes:
+    - keep_only_reasoning
+    - keep_only_facts
+    - keep_only_precedents
+    - drop_reasoning
+    - drop_precedents
+  section_importance_composite_weights:
+    removal_impact: 0.45
+    solo_sufficiency: 0.35
+    flip_sensitivity: 0.2
+  export_section_importance_chart_data: true
+  submission_package_output_dirname: submission_package
+  submission_figure_formats:
+    - png
+    - svg
+  export_claim_traceability: true
+  export_caption_files: true
+  export_placement_guides: true
